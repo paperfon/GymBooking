@@ -5,9 +5,9 @@
 }
 
 <h1>Index</h1>
-@if (User.Identity.IsAuthenticated)
+@if (User.IsInRole("Admin"))
 {
-    <p>Hello! As a logged in user you have the ability to perform the following actions:</p>
+    <p>Hello Admin! As a logged in admin you have the ability to perform the following actions:</p>
     <p><a asp-action="Create">Create New</a></p>
 }
 

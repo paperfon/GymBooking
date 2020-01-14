@@ -21,24 +21,26 @@ namespace GymBooking
             using (var scope = host.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
+
+                // For migrating db
                 var context = services.GetRequiredService<ApplicationDbContext>();
                 context.Database.Migrate();
 
+                // For reading/sending the PW
                 var config = host.Services.GetRequiredService<IConfiguration>();
-
                 // Need to be added in command/package manager console
                 // dotnet user-secrets set "Gym:AdminPW" "LexiconNC19!"
                 // it's a json format where Gym{AdminPW: ...}
-                
                 var adminPW = config["Gym:AdminPW"];
 
                 try
                 {
                     SeedData.InitializeAsync(services, adminPW).Wait();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    throw;
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex.Message, "Seed Fail");
                 }
             
             }
