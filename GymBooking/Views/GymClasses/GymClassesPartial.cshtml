@@ -1,4 +1,6 @@
-﻿@model IEnumerable<GymBooking.Models.GymClass>
+﻿@using Microsoft.AspNetCore.Identity
+@model IEnumerable<GymBooking.Models.GymClass>
+@inject UserManager<ApplicationUser> UserManager
 
 @foreach (var gymClass in Model)
 {
@@ -38,7 +40,16 @@
             @if (User.Identity.IsAuthenticated)
             {
                 <span> |</span>
-                <a asp-action="BookingToggle" asp-route-id="@gymClass.Id">Book/Unbook</a>
+                <a asp-action="BookingToggle" asp-route-id="@gymClass.Id">
+                    @if (gymClass.AttendingMembers.FirstOrDefault(m => m.ApplicationUser.Id == UserManager.GetUserId(User)) != null)
+                    {
+                        <span>Unbook</span>
+                    }
+                    else
+                    {
+                        <span>Book</span>
+                    }
+                </a>
             }
             @if (User.IsInRole("Admin"))
             {
