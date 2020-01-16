@@ -175,7 +175,7 @@ namespace GymBooking.Controllers
         // GET: GymClasses/BookingToggle/5
         public async Task<IActionResult> BookingToggle(int? id)
         {
-            if (id == null) return NotFound(); 
+            if (id == null) return NotFound();
 
             //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             //var userId = await _userManager.GetUserIdAsync(User);
@@ -196,6 +196,7 @@ namespace GymBooking.Controllers
             // Get the gym pass
             var currentGymClass = await _context.GymClass
                 .Include(a => a.AttendingMembers)
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(g => g.Id == id);
 
             // Is the user booked on the pass?
@@ -229,34 +230,40 @@ namespace GymBooking.Controllers
                 .Include(g => g.AttendingMembers)
                 .ThenInclude(a => a.ApplicationUser)
                 .IgnoreQueryFilters()
-                .Where(g=>g.StartTime < DateTime.Now)
+                .Where(g => g.StartTime < DateTime.Now)
                 .ToListAsync();
 
             return View(model);
             //return View(await _context.GymClass.ToListAsync());
         }
 
-        //public async Task<IActionResult> MyBookedPasses()
-        //{
-        //    var userId = userManager.GetUserId(User);
+        public async Task<IActionResult> MyBookedPasses()
+        {
+            var userId = userManager.GetUserId(User);
 
-        //    var model = await _context.ApplicationUser
-        //        .Include(a => a.AttendedClasses)
-        //        .ThenInclude(g => g.GymClass)
-        //        .Where(u=>u.AttendedClasses.ApplicationUserId == userId)
-        //        .ToListAsync();
+            var model = await _context.GymClass
+                .Include(a => a.AttendingMembers)
+                .ThenInclude(a => a.ApplicationUser)
+                .Where(a => a.AttendingMembers.All(x => x.ApplicationUserId == userId))
+                .ToListAsync();
 
-            //var model = await _context.GymClass
-            //    .Include(g => g.AttendingMembers)
-            //    .ThenInclude(a => a.ApplicationUser)
-            //    .Where(u => u.AttendingMembers.ApplicationUserId == userId)
-            //    .ToListAsync();
+            return View(model);
 
+        }
 
+        public async Task<IActionResult> MyHistoryBookedPasses()
+        {
+            var userId = userManager.GetUserId(User);
 
-            //return View(nameof(Index));
+            var model = await _context.GymClass
+                .Include(a => a.AttendingMembers)
+                .ThenInclude(a => a.ApplicationUser)
+                .IgnoreQueryFilters()
+                .Where(a => a.AttendingMembers.All(x => x.ApplicationUserId == userId) && a.StartTime < DateTime.Now)
+                .ToListAsync();
 
-        //}
+            return View(model);
+        }
 
         private bool GymClassExists(int id)
         {
