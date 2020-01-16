@@ -257,6 +257,7 @@ namespace GymBooking.Controllers
             //return View(await _context.GymClass.ToListAsync());
         }
 
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> MyBookedPasses()
         {
             var userId = userManager.GetUserId(User);
@@ -268,11 +269,16 @@ namespace GymBooking.Controllers
             //    .ToListAsync();
 
             var m = await _context.ApplicationUserGymClass
-                .Include(a => a.ApplicationUser)
-                .Include(a => a.GymClass.AttendingMembers)
-                .Where(a => a.ApplicationUserId == userId)
-                .Select(a => a.GymClass)
+                .Where(augc => augc.ApplicationUserId == userId)
+                .Select(augc => augc.GymClass)
                 .ToListAsync();
+
+            //var m = await _context.ApplicationUserGymClass
+            //    //.Include(a => a.ApplicationUser)
+            //    //.Include(a => a.GymClass.AttendingMembers)
+            //    .Where(a => a.ApplicationUserId == userId)
+            //    .Select(a => a.GymClass)
+            //    .ToListAsync();
 
             //var model2 = await _context.ApplicationUser
             //    .Include(a => a.AttendedClasses)

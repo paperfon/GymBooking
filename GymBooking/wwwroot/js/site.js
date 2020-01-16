@@ -2,3 +2,11 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
+
+$(document).ready(function () {
+    $("#history").click(function () {
+        $("form").submit();
+    });
+});
+
+//var checkbox = document.getElementById
