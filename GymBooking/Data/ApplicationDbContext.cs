@@ -17,10 +17,17 @@ namespace GymBooking.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            // Körs alltid först annars skrivs vår egen konfiguration över av default inställningarna i base
             base.OnModelCreating(builder);
 
+            // Define a composite key
             builder.Entity<ApplicationUserGymClass>()
-                .HasKey(t => new { t.ApplicationUserId, t.GymClassId });
+                .HasKey(t => new { 
+                    t.ApplicationUserId, 
+                    t.GymClassId 
+                });
+
+            builder.Entity<GymClass>().HasQueryFilter(g => g.StartTime > DateTime.Now);
 
             //builder.Entity<ApplicationUser>()
             //    .HasData(

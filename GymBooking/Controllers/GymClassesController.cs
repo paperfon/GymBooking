@@ -36,6 +36,7 @@ namespace GymBooking.Controllers
             var model = await _context.GymClass
                 .Include(g => g.AttendingMembers)
                 .ThenInclude(a => a.ApplicationUser)
+                //.IgnoreQueryFilters()
                 .ToListAsync();
 
             return View(model);
@@ -174,7 +175,7 @@ namespace GymBooking.Controllers
         // GET: GymClasses/BookingToggle/5
         public async Task<IActionResult> BookingToggle(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null) return NotFound(); 
 
             //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             //var userId = await _userManager.GetUserIdAsync(User);
@@ -220,6 +221,41 @@ namespace GymBooking.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> History()
+        {
+            var model = await _context.GymClass
+                .Include(g => g.AttendingMembers)
+                .ThenInclude(a => a.ApplicationUser)
+                .IgnoreQueryFilters()
+                .Where(g=>g.StartTime < DateTime.Now)
+                .ToListAsync();
+
+            return View(model);
+            //return View(await _context.GymClass.ToListAsync());
+        }
+
+        //public async Task<IActionResult> MyBookedPasses()
+        //{
+        //    var userId = userManager.GetUserId(User);
+
+        //    var model = await _context.ApplicationUser
+        //        .Include(a => a.AttendedClasses)
+        //        .ThenInclude(g => g.GymClass)
+        //        .Where(u=>u.AttendedClasses.ApplicationUserId == userId)
+        //        .ToListAsync();
+
+            //var model = await _context.GymClass
+            //    .Include(g => g.AttendingMembers)
+            //    .ThenInclude(a => a.ApplicationUser)
+            //    .Where(u => u.AttendingMembers.ApplicationUserId == userId)
+            //    .ToListAsync();
+
+
+
+            //return View(nameof(Index));
+
         }
 
         private bool GymClassExists(int id)

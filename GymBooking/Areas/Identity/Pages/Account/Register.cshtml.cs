@@ -59,9 +59,6 @@ namespace GymBooking.Areas.Identity.Pages.Account
             [Display(Name = "Last Name")]
             public string LastName { get; set; }
 
-            [Display(Name = "Time of Registration")]
-            public DateTime TimeOfRegistration { get; set; }
-
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
             [DataType(DataType.Password)]
@@ -94,9 +91,21 @@ namespace GymBooking.Areas.Identity.Pages.Account
                     TimeOfRegistration = DateTime.UtcNow
                 };
                 var result = await _userManager.CreateAsync(user, Input.Password);
+
                 if (result.Succeeded)
                 {
+
+
                     _logger.LogInformation("User created a new account with password.");
+                    
+                    // Add role to user
+                    var resultAddRole = await _userManager.AddToRoleAsync(user, "Member");
+                    
+                    // Todo: act on not succeeded
+                    //if (!resultAddRole.Succeeded)
+                    //{
+
+                    //}
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
