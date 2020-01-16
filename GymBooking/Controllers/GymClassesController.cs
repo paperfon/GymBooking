@@ -256,7 +256,7 @@ namespace GymBooking.Controllers
 
             //return View(nameof(Index));
 
-        }
+        //}
 
         private bool GymClassExists(int id)
         {
