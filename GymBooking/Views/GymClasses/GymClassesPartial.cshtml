@@ -1,12 +1,13 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@model IEnumerable<GymBooking.Models.GymClass>
+@*@model IEnumerable<GymBooking.Models.GymClass>*@
+@model IndexViewModel
 @inject UserManager<ApplicationUser> UserManager
 
 @{ 
     var userId = UserManager.GetUserId(User);
 }
 
-@foreach (var gymClass in Model)
+@foreach (var gymClass in Model.GymClasses)
 {
     <tr>
         <td>

@@ -27,19 +27,39 @@ namespace GymBooking.Controllers
 
         // GET: GymClasses
         [AllowAnonymous]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(IndexViewModel vm = null)
         {
+            if (vm.History)
+            {
+                var passesHistory = await _context.GymClass
+                .Include(g => g.AttendingMembers)
+                .ThenInclude(a => a.ApplicationUser)
+                .IgnoreQueryFilters()
+                .Where(g=>g.StartTime < DateTime.Now)
+                .ToListAsync();
+
+                var model = new IndexViewModel
+                {
+                    GymClasses = passesHistory
+                };
+
+                return View(model);
+            }
             //if (!User.Identity.IsAuthenticated)
             //{
             //    return View(await _context.GymClass.ToListAsync());
             //}
-            var model = await _context.GymClass
+            var passes = await _context.GymClass
                 .Include(g => g.AttendingMembers)
                 .ThenInclude(a => a.ApplicationUser)
                 //.IgnoreQueryFilters()
                 .ToListAsync();
 
-            return View(model);
+            var model2 = new IndexViewModel {
+                GymClasses = passes
+            };
+
+            return View(model2);
             //return View(await _context.GymClass.ToListAsync());
         }
 
@@ -241,13 +261,26 @@ namespace GymBooking.Controllers
         {
             var userId = userManager.GetUserId(User);
 
-            var model = await _context.GymClass
-                .Include(a => a.AttendingMembers)
-                .ThenInclude(a => a.ApplicationUser)
-                .Where(a => a.AttendingMembers.All(x => x.ApplicationUserId == userId))
+            //var model = await _context.GymClass
+            //    .Include(a => a.AttendingMembers)
+            //    .ThenInclude(a => a.ApplicationUser)
+            //    .Where(a => a.AttendingMembers.All(x => x.ApplicationUserId == userId))
+            //    .ToListAsync();
+
+            var m = await _context.ApplicationUserGymClass
+                .Include(a => a.ApplicationUser)
+                .Include(a => a.GymClass.AttendingMembers)
+                .Where(a => a.ApplicationUserId == userId)
+                .Select(a => a.GymClass)
                 .ToListAsync();
 
-            return View(model);
+            //var model2 = await _context.ApplicationUser
+            //    .Include(a => a.AttendedClasses)
+            //    .ThenInclude(g => g.GymClass)
+            //    .Where(u => u.Id == userId)
+            //    .ToListAsync();
+
+            return View(m);
 
         }
 
