@@ -11,21 +11,20 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using GymBooking.Data.Repositories;
+using GymBooking.Core;
 
 namespace GymBooking.Controllers
 {
     [Authorize]
     public class GymClassesController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UnitOfWork unitOfWork;
+        private readonly IUnitOfWork unitOfWork;
         private readonly UserManager<ApplicationUser> userManager;
 
-        public GymClassesController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public GymClassesController(UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork)
         {
-            _context = context;
-            unitOfWork = new UnitOfWork(_context);
             this.userManager = userManager;
+            this.unitOfWork = unitOfWork;
         }
 
         // GET: GymClasses
@@ -35,15 +34,14 @@ namespace GymBooking.Controllers
             if (vm.History)
             {
                 List<GymClass> passesHistory = await unitOfWork.GymClasses.GetHistoryAsync();
-                var model = new IndexViewModel { GymClasses = passesHistory };
-                return View(model);
+                var historyModel = new IndexViewModel { GymClasses = passesHistory };
+                return View(historyModel);
             }
-            List<GymClass> passes = await unitOfWork.GymClasses.GetAllWithUsers();
+            List<GymClass> passes = await unitOfWork.GymClasses.GetAllClassesWithUsers();
 
-            var model2 = new IndexViewModel { GymClasses = passes };
+            var model = new IndexViewModel { GymClasses = passes };
 
-            return View(model2);
-            //return View(await _context.GymClass.ToListAsync());
+            return View(model);
         }
 
         // GET: GymClasses/Details/5
@@ -54,11 +52,7 @@ namespace GymBooking.Controllers
             {
                 return NotFound();
             }
-
-            var gymClass = await _context.GymClass
-                .Include(a => a.AttendingMembers)
-                .ThenInclude(u => u.ApplicationUser)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var gymClass = await unitOfWork.GymClasses.GetClassWithUsers(id);
             if (gymClass == null)
             {
                 return NotFound();
@@ -86,7 +80,6 @@ namespace GymBooking.Controllers
             {
                 unitOfWork.GymClasses.Add(gymClass);
                 await unitOfWork.CompleteAsync();
-                //await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(gymClass);
@@ -100,8 +93,7 @@ namespace GymBooking.Controllers
             {
                 return NotFound();
             }
-
-            var gymClass = await _context.GymClass.FindAsync(id);
+            var gymClass = await unitOfWork.GymClasses.GetClassAsync(id);
             if (gymClass == null)
             {
                 return NotFound();
@@ -126,8 +118,8 @@ namespace GymBooking.Controllers
             {
                 try
                 {
-                    _context.Update(gymClass);
-                    await _context.SaveChangesAsync();
+                    unitOfWork.GymClasses.Update(gymClass);
+                    await unitOfWork.CompleteAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -154,8 +146,7 @@ namespace GymBooking.Controllers
                 return NotFound();
             }
 
-            var gymClass = await _context.GymClass
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var gymClass = await unitOfWork.GymClasses.GetClassAsync(id);
             if (gymClass == null)
             {
                 return NotFound();
@@ -170,9 +161,9 @@ namespace GymBooking.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var gymClass = await _context.GymClass.FindAsync(id);
-            _context.GymClass.Remove(gymClass);
-            await _context.SaveChangesAsync();
+            var gymClass = await unitOfWork.GymClasses.GetClassAsync(id);
+            unitOfWork.GymClasses.Remove(gymClass);
+            await unitOfWork.CompleteAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -181,20 +172,7 @@ namespace GymBooking.Controllers
         {
             if (id == null) return NotFound();
 
-            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            //var userId = await _userManager.GetUserIdAsync(User);
-            //var gymClass = await _context.GymClass.FindAsync(id);
-
-            //User.Identity.
-
-            //if (gymClass.AttendingMembers.Contains(userId))
-            //{
-
-            //}
-
             // Get the userid
-            // var userId = _context.Users.FirstOrDefault(user => user.UserName == User.Identity.Name);
-            //User.Identity.Name;
             var userId = userManager.GetUserId(User);
             GymClass currentGymClass = await unitOfWork.GymClasses.GetMembersAsync(id);
 
@@ -210,16 +188,14 @@ namespace GymBooking.Controllers
                     GymClassId = currentGymClass.Id
                 };
                 unitOfWork.UserGymClasses.Add(book);
-                //_context.ApplicationUserGymClass.Add(book);
-                _context.SaveChanges();
+                await unitOfWork.CompleteAsync();
             }
 
             // Otherwise unbook
             else
             {
                 unitOfWork.UserGymClasses.Remove(attending);
-                //_context.ApplicationUserGymClass.Remove(attending);
-                _context.SaveChanges();
+                await unitOfWork.CompleteAsync();
             }
 
             return RedirectToAction(nameof(Index));
@@ -227,15 +203,9 @@ namespace GymBooking.Controllers
 
         public async Task<IActionResult> History()
         {
-            var model = await _context.GymClass
-                .Include(g => g.AttendingMembers)
-                .ThenInclude(a => a.ApplicationUser)
-                .IgnoreQueryFilters()
-                .Where(g => g.StartTime < DateTime.Now)
-                .ToListAsync();
+            object model = await unitOfWork.GymClasses.GetHistoryAsync();
 
             return View(model);
-            //return View(await _context.GymClass.ToListAsync());
         }
 
         [Authorize(Roles = "Member")]
@@ -244,19 +214,6 @@ namespace GymBooking.Controllers
             var userId = userManager.GetUserId(User);
             List<GymClass> m = await unitOfWork.UserGymClasses.GetAllBookings(userId);
 
-            //var m = await _context.ApplicationUserGymClass
-            //    //.Include(a => a.ApplicationUser)
-            //    //.Include(a => a.GymClass.AttendingMembers)
-            //    .Where(a => a.ApplicationUserId == userId)
-            //    .Select(a => a.GymClass)
-            //    .ToListAsync();
-
-            //var model2 = await _context.ApplicationUser
-            //    .Include(a => a.AttendedClasses)
-            //    .ThenInclude(g => g.GymClass)
-            //    .Where(u => u.Id == userId)
-            //    .ToListAsync();
-
             return View(m);
 
         }
@@ -264,15 +221,10 @@ namespace GymBooking.Controllers
         public async Task<IActionResult> MyHistoryBookedPasses()
         {
             var userId = userManager.GetUserId(User);
-
-            var model = await _context.GymClass
-                .Include(a => a.AttendingMembers)
-                .ThenInclude(a => a.ApplicationUser)
-                .IgnoreQueryFilters()
-                .Where(a => a.AttendingMembers.All(x => x.ApplicationUserId == userId) && a.StartTime < DateTime.Now)
-                .ToListAsync();
+            List<GymClass> model = await unitOfWork.GymClasses.MyHistoryBookedClasses(userId);
 
             return View(model);
         }
+
     }
 }

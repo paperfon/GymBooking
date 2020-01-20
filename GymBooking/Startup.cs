@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using GymBooking.Models;
+using GymBooking.Core;
 
 namespace GymBooking
 {
@@ -37,6 +38,8 @@ namespace GymBooking
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddControllersWithViews();
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.AddRazorPages();
         }

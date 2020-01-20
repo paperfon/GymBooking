@@ -17,7 +17,7 @@ namespace GymBooking.Data.Repositories
             _context = context;
         }
 
-        public async Task<List<GymClass>> GetAllWithUsers()
+        public async Task<List<GymClass>> GetAllClassesWithUsers()
         {
             return await _context.GymClass
                 .Include(g => g.AttendingMembers)
@@ -35,6 +35,19 @@ namespace GymBooking.Data.Repositories
             .ToListAsync();
         }
 
+        public async Task<GymClass> GetClassWithUsers(int? id)
+        {
+            return await _context.GymClass
+                .Include(a => a.AttendingMembers)
+                .ThenInclude(u => u.ApplicationUser)
+                .FirstOrDefaultAsync(m => m.Id == id);
+        }
+
+        public async Task<GymClass> GetClassAsync(int? id)
+        {
+            return await _context.GymClass.FindAsync(id);
+        }
+
         public async Task<GymClass> GetMembersAsync(int? id)
         {
 
@@ -50,10 +63,31 @@ namespace GymBooking.Data.Repositories
             return _context.GymClass.Any(e => e.Id == id);
         }
 
+
+        public async Task<List<GymClass>> MyHistoryBookedClasses(string userId)
+        {
+            return await _context.GymClass
+                .Include(a => a.AttendingMembers)
+                .ThenInclude(a => a.ApplicationUser)
+                .IgnoreQueryFilters()
+                .Where(a => a.AttendingMembers.All(x => x.ApplicationUserId == userId) && a.StartTime < DateTime.Now)
+                .ToListAsync();
+        }
+
         public void Add(GymClass gymClass)
         {
 
             _context.Add(gymClass);
+        }
+
+        public void Update(GymClass gymClass)
+        {
+            _context.Update(gymClass);
+        }
+
+        public void Remove(GymClass gymClass)
+        {
+            _context.Remove(gymClass);
         }
     }
 }
