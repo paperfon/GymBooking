@@ -1,6 +1,7 @@
 using GymBooking.Core;
 using GymBooking.Core.Repositories;
 using GymBooking.Models;
+using GymBooking.Tests.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -32,18 +33,11 @@ namespace GymBooking.Controllers
             controller = new GymClassesController(mockUserManager.Object, mockUOW.Object);
         }
 
-        private void SetUpUserIsAuthenticated(Controller controller, bool isAuthenticated)
-        {
-            var mockContext = new Mock<HttpContext>(MockBehavior.Default);
-            mockContext.SetupGet(httpCon => httpCon.User.Identity.IsAuthenticated).Returns(isAuthenticated);
-            controller.ControllerContext = new ControllerContext { HttpContext = mockContext.Object };
-        }
-
         [TestMethod]
         public async Task Index_ReturnsViewResult_ShouldPass()
         {
             //Arrange
-            SetUpUserIsAuthenticated(controller, true);
+            controller.SetUserIsAuthenticated(true);
             var vm = new IndexViewModel { History = false };
 
             //Act
@@ -61,7 +55,7 @@ namespace GymBooking.Controllers
 
             repository.Setup(g => g.GetAllAsync()).ReturnsAsync(classes);
             var vm = new IndexViewModel { History = false };
-            SetUpUserIsAuthenticated(controller, false);
+            controller.SetUserIsAuthenticated(false);
 
             var viewResult = controller.Index(vm).Result as ViewResult;
 
