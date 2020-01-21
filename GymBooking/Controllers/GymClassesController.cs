@@ -72,6 +72,11 @@ namespace GymBooking.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                //{
+                return PartialView("CreatePartial");
+            //}
             return View();
         }
 
@@ -87,6 +92,14 @@ namespace GymBooking.Controllers
             {
                 unitOfWork.GymClasses.Add(gymClass);
                 await unitOfWork.CompleteAsync();
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var gymClasses = await unitOfWork.GymClasses.GetAllClassesWithUsers();
+                    var vm = new IndexViewModel { GymClasses = gymClasses };
+                    return PartialView("GymClassesPartial", vm);
+                }
+
                 return RedirectToAction(nameof(Index));
             }
             return View(gymClass);

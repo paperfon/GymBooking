@@ -8,8 +8,19 @@
 <h1>Index</h1>
 @if (User.IsInRole("Admin"))
 {
-    <p>Hello Admin! As a logged in admin you have the ability to perform the following actions:</p>
-    <p><a asp-action="Create">Create New</a></p>
+    @*<p>Hello Admin! As a logged in admin you have the ability to perform the following actions:</p>
+    <p><a asp-action="Create">Create New</a></p>*@
+
+    <p id="createGymClassForm">
+        <a asp-action="Create" data-ajax="true" data-ajax-method="GET" data-ajax-mode="replace" data-ajax-update="#createGymClassForm">
+            Create New Class
+        </a>
+    </p>
+
+    @*<p>
+        <a asp-action="Create">Create New Returns the standard Index View not the partial</a>
+    </p>*@
+
 }
 
 @if (User.IsInRole("Member"))
@@ -45,7 +56,7 @@
         </tr>
     </thead>
 
-    <tbody>
+    <tbody id="gymClassesUpdate">
         <partial name="GymClassesPartial" />
     </tbody>
 </table>

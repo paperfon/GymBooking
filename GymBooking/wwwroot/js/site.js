@@ -9,4 +9,8 @@ $(document).ready(function () {
     });
 });
 
+function ClearForm() {
+    $(".clear").val("");
+}
+
 //var checkbox = document.getElementById
