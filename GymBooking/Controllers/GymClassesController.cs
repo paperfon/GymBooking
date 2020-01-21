@@ -31,16 +31,23 @@ namespace GymBooking.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Index(IndexViewModel vm = null)
         {
+
+            var modelUserNotLoggedIn = new IndexViewModel();
+
+            if (!User.Identity.IsAuthenticated)
+            {
+                modelUserNotLoggedIn.GymClasses = await unitOfWork.GymClasses.GetAllAsync();
+                return View(modelUserNotLoggedIn);
+            }
             if (vm.History)
             {
                 List<GymClass> passesHistory = await unitOfWork.GymClasses.GetHistoryAsync();
                 var historyModel = new IndexViewModel { GymClasses = passesHistory };
                 return View(historyModel);
             }
+
             List<GymClass> passes = await unitOfWork.GymClasses.GetAllClassesWithUsers();
-
             var model = new IndexViewModel { GymClasses = passes };
-
             return View(model);
         }
 

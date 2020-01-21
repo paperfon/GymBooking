@@ -16,5 +16,6 @@ namespace GymBooking.Core.Repositories
         Task<GymClass> GetClassWithUsers(int? id);
         Task<GymClass> GetClassAsync(int? id);
         bool GymClassExists(int id);
+        Task<IEnumerable<GymClass>> GetAllAsync();
     }
 }
